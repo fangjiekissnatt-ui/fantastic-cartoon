@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能制图Canvas工作室</title>
+    <style>
+        /* 重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1e1e1e;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 主容器 - Canvas布局 */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+        }
+
+        /* 左侧工具栏 */
+        .toolbar {
+            width: 320px;
+            background: rgba(30, 30, 30, 0.95);
+            border-right: 1px solid #444;
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 工具栏内容区域 - 可滚动 */
+        .toolbar-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .toolbar-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .toolbar-content::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        /* 底部按钮区域 - 固定位置 */
+        .toolbar-footer {
+            padding: 20px;
+            border-top: 1px solid #444;
+            background: rgba(30, 30, 30, 0.98);
+        }
+
+        /* 工具栏标题 */
+        .toolbar-header {
+            margin-bottom: 30px;
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* 工具组 */
+        .tool-group {
+            margin-bottom: 30px;
+        }
+
+        .tool-group-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tool-group-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        /* 风格选择器 */
+        .style-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: none; /* 移除高度限制，让内容完全展示 */
+        }
+
+        .style-option {
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .style-option:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .style-option.selected {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 风格预览图片 */
+        .style-preview-image {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .style-preview-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .style-fallback {
+            font-size: 24px;
+            display: none;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .style-name {
+            font-size: 12px;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        /* 提示词输入区 */
+        .prompt-section {
+            margin-bottom: 25px;
+        }
+
+        .prompt-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .prompt-input::placeholder {
+            color: #666;
+        }
+
+        /* 生成按钮 */
+        .generate-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #7c94f0 0%, #8a5bb5 100%);
+        }
+
+        .generate-button:active {
+            transform: translateY(0);
+        }
+
+        .generate-button:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* API状态指示器 */
+        .api-status {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .api-status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+
+        .api-status.warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #FFC107;
+        }
+
+        /* 右侧画布区域 */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #2a2a2a;
+            position: relative;
+        }
+
+        /* 画布工具栏 */
+        .canvas-toolbar {
+            height: 60px;
+            background: rgba(30, 30, 30, 0.9);
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .canvas-info {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .canvas-btn {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .canvas-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* 主画布 */
+        .canvas-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-image: 
+                radial-gradient(circle at 20px 20px, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* 画布内容容器 */
+        .canvas-content {
+            width: 90%;
+            max-width: 800px;
+            height: 90%;
+            max-height: 600px;
+            background: rgba(255,255,255,0.02);
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .canvas-content.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        .canvas-content.has-image {
+            border-style: solid;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-hint {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* 图片显示 */
+        .canvas-image {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .canvas-image:hover {
+            transform: scale(1.05);
+        }
+
+        /* 加载状态 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .loading-hint {
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* 图片操作按钮 */
+        .image-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .canvas-content:hover .image-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(102, 126, 234, 0.8);
+            transform: scale(1.1);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .toolbar {
+                width: 280px;
+            }
+            
+            .style-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .canvas-content {
+                width: 95%;
+                height: 85%;
+            }
+        }
+
+        /* 隐藏原始文件输入 */
+        .hidden-file-input {
+            display: none;
+        }
+
+        /* 结果信息面板 */
+        .result-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .result-panel.show {
+            transform: translateY(0);
+        }
+
+        .result-info {
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        /* 主题切换按钮 */
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid #444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            color: #fff;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-switch:hover {
+            background: #667eea;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 主题切换按钮 -->
+    <button class="theme-switch" onclick="switchToLight()" title="切换到浅色模式">
+        ☀️
+    </button>
+
+    <div class="app-container">
+        <!-- 左侧工具栏 -->
+        <div class="toolbar">
+            <!-- 可滚动内容区域 -->
+            <div class="toolbar-content">
+                <!-- 标题区域 -->
+                <div class="toolbar-header">
+                    <h1 class="app-title">🎨 AI制图工作室</h1>
+                    <p class="app-subtitle">专业Canvas创作平台</p>
+                </div>
+
+            <!-- AI模型选择 -->
+            <div class="tool-group">
+                <h3 class="tool-group-title">🤖 AI模型选择</h3>
+                <div class="model-selector">
+                    <select id="modelSelect" class="style-select">
+                        <option value="auto">🧠 智能选择 (推荐)</option>
+                        <option value="segmind">🎯 Segmind - 真实照片转换</option>
+                        <option value="gemini">🤖 Google Gemini - 多功能生成</option>
+                        <option value="openrouter">🚀 OpenRouter - 高质量生成</option>
+                        <option value="fallback">🎨 备用生成器 - 演示模式</option>
+                    </select>
+                    <div class="model-description" style="margin-top: 10px; padding: 10px; background: rgba(40,40,40,0.5); border-radius: 8px; border-left: 3px solid #667eea;">
+                        <p id="modelDescription" style="font-size: 12px; color: #ccc; margin: 0;">智能选择会根据你的需求自动选择最合适的AI模型</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提示词输入 -->
+            <div class="tool-group">
+                <h3 class="tool-group-title">📝 创意描述</h3>
+                <textarea 
+                    id="promptInput"
+                    class="prompt-input" 
+                    placeholder="详细描述你想要创作的图片内容...&#10;&#10;例如：一只可爱的小猫坐在花园里，阳光明媚，周围有彩色的花朵，温馨治愈的画面"
+                ></textarea>
+            </div>
+
+            <!-- 风格选择 -->
+            <div class="tool-group">
+                <h3 class="tool-group-title">🎭 绘画风格</h3>
+                <div class="style-selector">
+                    <div class="style-option" data-style="disney">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/disney.jpg" alt="迪士尼动画" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🏰</div>
+                        </div>
+                        <span class="style-name">迪士尼动画</span>
+                    </div>
+                    <div class="style-option" data-style="reference_3d">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/reference_3d.jpg" alt="高保真3D卡通" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🎯</div>
+                        </div>
+                        <span class="style-name">高保真3D卡通</span>
+                    </div>
+                    <div class="style-option" data-style="3d_cartoon">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/3d_cartoon.jpg" alt="3D卡通" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🧸</div>
+                        </div>
+                        <span class="style-name">3D卡通</span>
+                    </div>
+                    <div class="style-option" data-style="anime">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/anime.jpg" alt="日式动漫" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🎌</div>
+                        </div>
+                        <span class="style-name">日式动漫</span>
+                    </div>
+                    <div class="style-option" data-style="watercolor">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/watercolor.jpg" alt="水彩画风" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🎨</div>
+                        </div>
+                        <span class="style-name">水彩画风</span>
+                    </div>
+                    <div class="style-option" data-style="oilpainting">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/oilpainting.jpg" alt="油画风格" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🖼️</div>
+                        </div>
+                        <span class="style-name">油画风格</span>
+                    </div>
+                    <div class="style-option" data-style="pixel">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/pixel.jpg" alt="像素艺术" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🕹️</div>
+                        </div>
+                        <span class="style-name">像素艺术</span>
+                    </div>
+                    <div class="style-option" data-style="minimalist">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/minimalist.jpg" alt="极简主义" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">⭕</div>
+                        </div>
+                        <span class="style-name">极简主义</span>
+                    </div>
+                    <div class="style-option" data-style="cyberpunk">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/cyberpunk.jpg" alt="赛博朋克" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🌃</div>
+                        </div>
+                        <span class="style-name">赛博朋克</span>
+                    </div>
+                    <div class="style-option" data-style="traditional_chinese">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/traditional_chinese.jpg" alt="中国山水画" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">🏔️</div>
+                        </div>
+                        <span class="style-name">中国山水画</span>
+                    </div>
+                    <div class="style-option" data-style="photography">
+                        <div class="style-preview-image">
+                            <img src="/static/styles/photography.jpg" alt="专业摄影" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">📸</div>
+                        </div>
+                        <span class="style-name">专业摄影</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- 底部固定按钮区域 -->
+            <div class="toolbar-footer">
+                <button id="generateBtn" class="generate-button">
+                    🚀 开始创作
+                </button>
+            </div>
+        </div>
+
+        <!-- 右侧画布区域 -->
+        <div class="canvas-area">
+            <!-- 画布工具栏 -->
+            <div class="canvas-toolbar">
+                <div class="canvas-info">
+                    <span id="canvasInfo">画布区域 - 拖拽图片到此处或点击生成AI图片</span>
+                </div>
+                <div class="canvas-controls">
+                    <button class="canvas-btn" onclick="clearCanvas()">🗑️ 清空</button>
+                    <button class="canvas-btn" onclick="downloadImage()">💾 保存</button>
+                    <button class="canvas-btn" onclick="uploadImage()">📁 上传</button>
+                </div>
+            </div>
+
+            <!-- 主画布 -->
+            <div class="canvas-main">
+                <div id="canvasContent" class="canvas-content">
+                    <!-- 空状态 -->
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-state-icon">🖼️</div>
+                        <div class="empty-state-text">开始你的AI创作之旅</div>
+                        <div class="empty-state-hint">拖拽图片到这里 或 输入创意描述生成图片</div>
+                    </div>
+
+                    <!-- 加载状态 -->
+                    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">AI正在创作中...</div>
+                        <div class="loading-hint">请稍候，这可能需要10-30秒</div>
+                    </div>
+
+                    <!-- 图片操作按钮 -->
+                    <div class="image-actions" style="display: none;">
+                        <button class="action-btn" onclick="editImage()" title="编辑图片">✏️</button>
+                        <button class="action-btn" onclick="regenerateImage()" title="重新生成">🔄</button>
+                        <button class="action-btn" onclick="removeImage()" title="删除图片">❌</button>
+                    </div>
+                </div>
+
+                <!-- 结果信息面板 -->
+                <div id="resultPanel" class="result-panel">
+                    <div id="resultInfo" class="result-info">
+                        <!-- 这里显示生成结果信息 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="hiddenFileInput" class="hidden-file-input" accept="image/*">
+
+    <script>
+        // 全局变量
+        let selectedStyle = null;
+        let currentImage = null;
+        let currentPrompt = '';
+
+        // DOM元素
+        const canvasContent = document.getElementById('canvasContent');
+        const emptyState = document.getElementById('emptyState');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const resultPanel = document.getElementById('resultPanel');
+        const resultInfo = document.getElementById('resultInfo');
+        const promptInput = document.getElementById('promptInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const hiddenFileInput = document.getElementById('hiddenFileInput');
+
+        // 模型描述信息
+        const modelDescriptions = {
+            'auto': '智能选择会根据你的需求自动选择最合适的AI模型',
+            'segmind': 'Segmind专门用于将图片转换为真实照片风格，需要上传参考图片',
+            'gemini': 'Google Gemini是多功能AI模型，支持多种风格和创意生成',
+            'openrouter': 'OpenRouter提供多种高质量AI模型，适合专业级图片生成',
+            'fallback': '备用生成器提供演示功能，生成带有描述文字的示例图片'
+        };
+
+        // 更新模型描述
+        function updateModelDescription() {
+            const modelSelect = document.getElementById('modelSelect');
+            const modelDescription = document.getElementById('modelDescription');
+            const selectedModel = modelSelect.value;
+            
+            modelDescription.textContent = modelDescriptions[selectedModel] || '未知模型';
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎨 AI制图Canvas工作室已启动');
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setupEventListeners();
+            setupDragAndDrop();
+            
+            // 设置模型选择器事件监听
+            const modelSelect = document.getElementById('modelSelect');
+            if (modelSelect) {
+                modelSelect.addEventListener('change', updateModelDescription);
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 风格选择
+            document.querySelectorAll('.style-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // 移除之前的选择
+                    document.querySelectorAll('.style-option').forEach(opt => 
+                        opt.classList.remove('selected'));
+                    
+                    // 添加新选择
+                    this.classList.add('selected');
+                    selectedStyle = this.dataset.style;
+                    
+                    updateCanvasInfo();
+                });
+            });
+
+            // 生成按钮
+            generateBtn.addEventListener('click', generateImage);
+
+            // 文件输入
+            hiddenFileInput.addEventListener('change', handleFileSelect);
+
+            // 提示词输入
+            promptInput.addEventListener('input', function() {
+                currentPrompt = this.value;
+                updateCanvasInfo();
+            });
+        }
+
+        // 设置拖拽上传
+        function setupDragAndDrop() {
+            canvasContent.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            canvasContent.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            canvasContent.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    handleImageFile(files[0]);
+                }
+            });
+
+            // 点击画布上传图片
+            canvasContent.addEventListener('click', function() {
+                if (!currentImage) {
+                    uploadImage();
+                }
+            });
+        }
+
+        // 更新画布信息
+        function updateCanvasInfo() {
+            const info = document.getElementById('canvasInfo');
+            let text = '画布区域';
+            
+            if (selectedStyle) {
+                const styleName = getStyleName(selectedStyle);
+                text += ` - ${styleName}风格`;
+            }
+            
+            if (currentPrompt) {
+                text += ` - "${currentPrompt.substring(0, 20)}${currentPrompt.length > 20 ? '...' : ''}"`;
+            }
+            
+            info.textContent = text;
+        }
+
+        // 获取风格中文名称
+        function getStyleName(style) {
+            const names = {
+                'disney': '迪士尼动画',
+                'anime': '日式动漫',
+                'watercolor': '水彩画风',
+                'oilpainting': '油画风格',
+                'pixel': '像素艺术',
+                'minimalist': '极简主义',
+                'cyberpunk': '赛博朋克',
+                'traditional_chinese': '中国山水画',
+                'photography': '专业摄影'
+            };
+            return names[style] || '未知风格';
+        }
+
+        // 生成图片
+        async function generateImage() {
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) {
+                alert('请输入创意描述！');
+                return;
+            }
+            
+            if (!selectedStyle) {
+                alert('请选择绘画风格！');
+                return;
+            }
+
+            showLoading();
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎨 创作中...';
+
+            try {
+                const formData = new FormData();
+                formData.append('prompt', prompt);
+                formData.append('style', selectedStyle);
+                
+                // 获取选择的AI模型
+                const modelSelect = document.getElementById('modelSelect');
+                const selectedModel = modelSelect ? modelSelect.value : 'auto';
+                formData.append('model', selectedModel);
+                console.log('🤖 使用AI模型:', selectedModel);
+
+                // 如果有上传的参考图片，也一起发送
+                if (hiddenFileInput.files[0]) {
+                    formData.append('reference_image', hiddenFileInput.files[0]);
+                    console.log('📸 已添加参考图片到请求中');
+                }
+
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showImage(result.image_url, result);
+                    showResultInfo(result, true);
+                } else {
+                    showResultInfo(result, false);
+                }
+
+            } catch (error) {
+                console.error('生成错误:', error);
+                showResultInfo({error: '网络错误，请稍后重试'}, false);
+            } finally {
+                hideLoading();
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🚀 开始创作';
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            loadingOverlay.style.display = 'flex';
+            emptyState.style.display = 'none';
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        // 显示图片
+        function showImage(imageUrl, metadata) {
+            hideLoading();
+            emptyState.style.display = 'none';
+            
+            // 移除现有图片
+            const existingImage = canvasContent.querySelector('.canvas-image');
+            if (existingImage) {
+                existingImage.remove();
+            }
+
+            // 创建新图片
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.className = 'canvas-image';
+            img.alt = '生成的图片';
+            
+            // 图片点击事件
+            img.addEventListener('click', function() {
+                editImage();
+            });
+
+            canvasContent.appendChild(img);
+            canvasContent.classList.add('has-image');
+            
+            // 显示操作按钮
+            const imageActions = canvasContent.querySelector('.image-actions');
+            imageActions.style.display = 'flex';
+
+            currentImage = {
+                url: imageUrl,
+                metadata: metadata
+            };
+
+            updateCanvasInfo();
+        }
+
+        // 显示结果信息
+        function showResultInfo(data, success) {
+            let html = '';
+            
+            if (success) {
+                html = `
+                    <div style="color: #4CAF50; margin-bottom: 8px;">✅ 创作完成</div>
+                    <div>任务ID: ${data.task_id || 'N/A'}</div>
+                    <div>风格: ${getStyleName(selectedStyle)}</div>
+                    <div>生成时间: ${new Date().toLocaleString()}</div>
+                `;
+            } else {
+                html = `
+                    <div style="color: #f44336; margin-bottom: 8px;">❌ 创作失败</div>
+                    <div>错误信息: ${data.error || '未知错误'}</div>
+                    <div>请检查网络连接或稍后重试</div>
+                `;
+            }
+
+            resultInfo.innerHTML = html;
+            resultPanel.classList.add('show');
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                resultPanel.classList.remove('show');
+            }, 3000);
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        }
+
+        // 处理图片文件
+        function handleImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showImage(e.target.result, {
+                    filename: file.name,
+                    size: file.size,
+                    type: file.type
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 工具栏按钮函数
+        function uploadImage() {
+            hiddenFileInput.click();
+        }
+
+        function clearCanvas() {
+            const existingImage = canvasContent.querySelector('.canvas-image');
+            if (existingImage) {
+                existingImage.remove();
+            }
+            
+            canvasContent.classList.remove('has-image');
+            emptyState.style.display = 'block';
+            
+            const imageActions = canvasContent.querySelector('.image-actions');
+            imageActions.style.display = 'none';
+            
+            currentImage = null;
+            updateCanvasInfo();
+        }
+
+        function downloadImage() {
+            if (!currentImage) {
+                alert('没有图片可以保存');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.href = currentImage.url;
+            link.download = `AI创作_${new Date().getTime()}.png`;
+            link.click();
+        }
+
+        function editImage() {
+            if (!currentImage) return;
+            
+            // 将当前图片作为参考，重新生成
+            if (currentPrompt) {
+                generateImage();
+            } else {
+                alert('请输入创意描述来编辑图片');
+                promptInput.focus();
+            }
+        }
+
+        function regenerateImage() {
+            if (currentPrompt && selectedStyle) {
+                generateImage();
+            } else {
+                alert('请确保已选择风格和输入描述');
+            }
+        }
+
+        function removeImage() {
+            clearCanvas();
+        }
+
+        // 主题切换
+        function switchToLight() {
+            window.location.href = '/light';
+        }
+    </script>
+</body>
+</html>
