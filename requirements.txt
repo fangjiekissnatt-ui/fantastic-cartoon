@@ -1,0 +1,24 @@
+# AI制图网站需要的Python库
+# 安装方法：在终端中运行 pip install -r requirements.txt
+
+# Flask - 这是一个用来制作网站的Python框架，简单易学
+# 它帮助我们创建网页、处理用户请求、返回结果
+Flask==2.3.3
+
+# Werkzeug - Flask的核心组件，处理HTTP请求
+# 这个库让我们的网站能够接收和响应用户的访问
+Werkzeug==2.3.7
+
+# Jinja2 - 网页模板引擎，虽然我们主要用HTML，但Flask需要它
+Jinja2==3.1.2
+
+# 图像处理库 - 用来实现图片处理功能
+Pillow==10.0.1             # 用来处理图片文件（打开、保存、基础处理）
+numpy==1.24.3              # 数学计算库，图像处理的基础
+
+# AI图像生成需要的库
+requests==2.31.0           # 用来调用各种AI API
+python-dotenv==1.0.0       # 用来安全管理API密钥
+
+# Google Gemini AI库 - 最新的多模态AI图像生成
+google-genai               # Google Gemini 2.5 Flash图像生成API

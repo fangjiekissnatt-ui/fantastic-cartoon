@@ -1,0 +1,51 @@
+🎨 豆包大模型美术风格分析结果
+==================================================
+
+## 迪士尼动画风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 日式动漫风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 水彩画风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 油画风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 像素艺术风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 极简主义风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 赛博朋克风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+
+## 中国山水画风格
+------------------------------
+请求异常: HTTPSConnectionPool(host='ark.cn-beijing.volces.com', port=443): Read timed out. (read timeout=30)
+
+==================================================
+

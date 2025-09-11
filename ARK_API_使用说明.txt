@@ -1,0 +1,62 @@
+🤖 豆包ARK API集成说明
+===============================================
+
+📋 已完成的集成工作：
+✅ 移除了Hugging Face相关代码
+✅ 集成了豆包ARK API支持
+✅ 创建了配置和测试工具
+✅ 保留了智能回退机制
+
+🔧 配置步骤：
+
+步骤1：获取ARK API密钥
+1. 访问字节跳动火山引擎控制台
+2. 进入豆包大模型服务
+3. 获取你的API Key
+4. 复制API密钥（形如：xxxx-xxxx-xxxx）
+
+步骤2：设置API密钥
+运行设置工具：
+   python3 setup_ark.py
+
+或者手动编辑config.py文件：
+   ARK_API_KEY = os.getenv('ARK_API_KEY', '你的API密钥')
+
+步骤3：测试API连接
+   python3 test_ark.py
+
+步骤4：启动服务器
+   python3 start_server.py
+
+🎯 当前模型配置：
+- API地址: https://ark.cn-beijing.volces.com/api/v3
+- 模型ID: ep-20250904150244-tk8fb
+- 支持：文本到图片生成、图片理解
+
+📱 网站访问地址：
+- 深色版：http://localhost:4000
+- 浅色版：http://localhost:4000/light
+
+🔄 智能回退机制：
+- 优先使用豆包ARK API生成真实AI图片
+- 如果API失败，自动切换到本地示例模式
+- 确保网站始终可用
+
+💡 功能特点：
+✅ 支持中文提示词
+✅ 多种风格选择
+✅ 参考图片上传
+✅ 拖拽式操作界面
+✅ 深色/浅色主题切换
+
+🛠️ 故障排除：
+如果遇到问题：
+1. 运行 python3 test_ark.py 检查API状态
+2. 检查网络连接
+3. 确认API密钥有效性
+4. 查看终端错误日志
+
+📞 技术支持：
+- 豆包ARK官方文档：https://www.volcengine.com/docs/82379
+- 如API不可用，系统会自动使用本地示例模式
+
