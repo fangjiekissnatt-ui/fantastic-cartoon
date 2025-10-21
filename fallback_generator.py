@@ -26,7 +26,7 @@ class FallbackImageGenerator:
         参数:
             prompt: 用户输入的描述文字
             style: 选择的风格
-            reference_image_path: 参考图片路径（在这个版本中会被忽略）
+            reference_image_path: 参考图片路径（如果存在会显示提示信息）
         
         返回:
             生成的图片文件路径
@@ -36,6 +36,10 @@ class FallbackImageGenerator:
             print("🎨 使用本地示例图片生成器...")
             print(f"   描述: {prompt}")
             print(f"   风格: {style}")
+            print(f"   参考图: {'有' if reference_image_path and os.path.exists(reference_image_path) else '无'}")
+            
+            # 如果有参考图，在生成的图片上添加提示信息
+            has_reference = reference_image_path and os.path.exists(reference_image_path)
             
             # 根据风格选择颜色主题（支持9种专业风格）
             color_themes = {
@@ -81,6 +85,13 @@ class FallbackImageGenerator:
             # 绘制装饰元素
             self.draw_decorative_elements(draw, width, height, theme, style)
             
+            # 如果有参考图，添加提示信息
+            if has_reference:
+                reference_text = "📸 参考图已加载"
+                ref_bbox = draw.textbbox((0, 0), reference_text, font=font_medium)
+                ref_width = ref_bbox[2] - ref_bbox[0]
+                draw.text(((width - ref_width) // 2, 100), reference_text, fill=theme['accent'], font=font_medium)
+            
             # 绘制用户描述（分行显示）
             words = prompt.split()
             lines = []
@@ -100,7 +111,7 @@ class FallbackImageGenerator:
                 lines.append(current_line.strip())
             
             # 显示描述文字
-            start_y = height // 2 - len(lines) * 15
+            start_y = (height // 2 - len(lines) * 15) + (50 if has_reference else 0)
             for i, line in enumerate(lines):
                 bbox = draw.textbbox((0, 0), line, font=font_medium)
                 line_width = bbox[2] - bbox[0]

@@ -38,9 +38,6 @@ class Config:
         'gpt4o': 'openai/gpt-4o-2024-08-06',  # GPT-4o - 支持图像生成
         'claude': 'anthropic/claude-3.5-sonnet',  # Claude 3.5 Sonnet
         'deepseek': 'deepseek/deepseek-chat-v3.1:free',  # DeepSeek V3.1 - 免费
-        'flux': 'black-forest-labs/flux-1-schnell',  # Flux 1 Schnell - 快速图像生成
-        'flux_dev': 'black-forest-labs/flux-1-dev',  # Flux 1 Dev - 开发版本
-        'flux_kontext_pro': 'black-forest-labs/flux-kontext-pro-image',  # Flux Kontext Pro Image - 支持参考图像
     }
     DEFAULT_OPENROUTER_MODEL = 'gemini_image'  # 默认使用免费的Gemini图像生成模型
     

@@ -80,6 +80,9 @@ class OpenRouterImageGenerator:
             print(f"📡 使用模型: {model}")
             print(f"📝 完整提示词: {full_prompt[:100]}...")
             
+            # 使用统一的参考图处理器
+            from unified_reference_handler import unified_handler
+            
             # 准备请求头
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -88,71 +91,12 @@ class OpenRouterImageGenerator:
                 "X-Title": "AI Image Generation Website"
             }
             
-            # 构建请求数据 - 针对图像生成模型
-            if "gemini" in model and "image" in model:
-                # Gemini图像生成模型的特殊处理
-                content_parts = []
-
-                # 添加文本提示
-                content_parts.append({"type": "text", "text": full_prompt})
-
-                # 如果有参考图片，添加到请求中
-                if reference_image_path and os.path.exists(reference_image_path):
-                    try:
-                        with open(reference_image_path, 'rb') as img_file:
-                            img_base64 = base64.b64encode(img_file.read()).decode()
-                            content_parts.append({
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}
-                            })
-                            print(f"📸 已添加参考图片到请求中")
-                    except Exception as e:
-                        print(f"⚠️ 处理参考图片失败: {e}")
-
-                data = {
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": content_parts
-                        }
-                    ],
-                    "modalities": ["image", "text"],  # 关键：指定输出模态
-                    "max_tokens": 1000,
-                    "temperature": 0.7
-                }
-            else:
-                # 其他模型的标准处理
-                data = {
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": f"Generate an image: {full_prompt}"
-                        }
-                    ],
-                    "modalities": ["image", "text"],  # 关键：指定输出模态
-                    "max_tokens": 1000,
-                    "temperature": 0.7
-                }
-
-                # 如果有参考图片，进行特殊处理
-                if reference_image_path and os.path.exists(reference_image_path):
-                    try:
-                        with open(reference_image_path, 'rb') as img_file:
-                            img_base64 = base64.b64encode(img_file.read()).decode()
-                            data["messages"] = [
-                                {
-                                    "role": "user",
-                                    "content": [
-                                        {"type": "text", "text": full_prompt},
-                                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
-                                    ]
-                                }
-                            ]
-                            print(f"📸 已添加参考图片到请求中")
-                    except Exception as e:
-                        print(f"⚠️ 处理参考图片失败: {e}")
+            # 使用统一的OpenRouter格式构建请求数据
+            data = unified_handler.build_openrouter_format(
+                prompt=full_prompt,
+                reference_image_path=reference_image_path,
+                model=model
+            )
 
             # 调用OpenRouter API
             url = f"{self.base_url}/chat/completions"
@@ -193,8 +137,9 @@ class OpenRouterImageGenerator:
             'watercolor': 'midjourney',  # Midjourney适合艺术风格
             'oilpainting': 'midjourney',
             'pixel': 'stable_diffusion',  # Stable Diffusion适合像素艺术
-            'cyberpunk': 'flux',
+            'cyberpunk': 'flux_kontext_pro',  # Flux Kontext Pro适合赛博朋克风格（支持参考图像）
             'photography': 'dalle3',  # DALL-E 3适合写实风格
+            '3d_cartoon': 'flux_kontext_pro',  # Flux Kontext Pro适合3D卡通风格（支持参考图像）
         }
         
         model_key = style_model_mapping.get(style, self.default_model)

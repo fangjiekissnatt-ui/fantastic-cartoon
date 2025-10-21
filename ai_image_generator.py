@@ -77,3 +77,5 @@ class AIImageGenerator:
 ai_generator = AIImageGenerator()
 
 
+
+

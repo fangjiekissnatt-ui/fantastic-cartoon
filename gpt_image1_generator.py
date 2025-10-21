@@ -106,7 +106,7 @@ class GPTImage1Generator:
                     enhanced_prompt += style_config['prompt_suffix']
                     print(f"   增强描述: {enhanced_prompt}")
             
-            # 构建请求数据
+            # 构建请求数据 - 恢复GPT Image 1原始格式
             data = {
                 "prompt": enhanced_prompt,
                 "size": "auto",
@@ -117,14 +117,15 @@ class GPTImage1Generator:
                 "output_format": "png"
             }
             
-            # 处理参考图片
+            # 处理参考图片 - 使用GPT Image 1的原始格式
             if reference_image_path:
                 try:
                     # 将参考图片转换为base64
                     reference_image_base64 = self.image_file_to_base64(reference_image_path)
                     if reference_image_base64:
-                        data["input_image"] = reference_image_base64
-                        print(f"   已添加参考图片到请求中")
+                        # 使用GPT Image 1的原始字段格式
+                        data["reference_images"] = [reference_image_base64]
+                        print(f"   已添加参考图片到请求中 (使用GPT Image 1原始格式)")
                     else:
                         print(f"   ⚠️ 参考图片转换失败，继续使用纯文本生成")
                 except Exception as e:

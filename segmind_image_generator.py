@@ -84,7 +84,9 @@ class SegmindImageGenerator:
             data['prompt'] = full_prompt  # 使用我们构建的提示词
             data['aspect_ratio'] = "match_input_image"  # 保持输入图片的宽高比
             data['output_format'] = "png"  # 输出PNG格式
-            data['safety_tolerance'] = 2  # 安全容忍度
+            data['safety_tolerance'] = 5  # 提高安全容忍度，避免误判
+            data['guidance_scale'] = 7.5  # 增加引导强度，更好地遵循提示词
+            data['num_inference_steps'] = 20  # 增加推理步数，提高质量
             
             # 添加输入图片
             with open(reference_image_path, 'rb') as img_file:
@@ -132,8 +134,11 @@ class SegmindImageGenerator:
     def _build_segmind_prompt(self, prompt, style):
         """构建适合Segmind的提示词"""
         
-        # 基础转换提示词
-        base_prompt = prompt if prompt else "make this a real photograph"
+        # 基础转换提示词 - 强调保持原图特征
+        base_prompt = prompt if prompt else "transform this image"
+        
+        # 特征保留的核心指令 - 更具体和强化的指令，避免NSFW触发词
+        preserve_features = "maintain the original character's distinctive features, facial structure, proportions, unique characteristics, identity, and recognizable traits, preserve the same person/character identity, keep original appearance and features"
         
         # 根据风格调整提示词
         if style:
@@ -144,23 +149,32 @@ class SegmindImageGenerator:
                 # 针对不同风格调整Segmind的转换效果
                 if style == 'photography':
                     # 专业摄影风格
-                    full_prompt = f"transform this into a professional high-quality photograph, {base_prompt}, DSLR camera quality, realistic lighting, sharp details"
+                    full_prompt = f"transform this into a professional high-quality photograph, {preserve_features}, {base_prompt}, DSLR camera quality, realistic lighting, sharp details, keep the same person/character"
                 elif style == 'disney':
                     # 迪士尼风格转为真实版本
-                    full_prompt = f"transform this into a real-life version maintaining Disney charm, {base_prompt}, photorealistic but magical"
+                    full_prompt = f"transform this into a real-life version maintaining Disney charm, {preserve_features}, {base_prompt}, photorealistic but magical, keep the same character"
                 elif style == 'anime':
                     # 动漫转真人
-                    full_prompt = f"transform this anime/cartoon into a real photograph of actual person, {base_prompt}, realistic human features"
+                    full_prompt = f"transform this anime/cartoon into a real photograph, {preserve_features}, {base_prompt}, realistic human features, keep the same person/character"
+                elif style == '3d_cartoon':
+                    # 3D卡通转真实
+                    full_prompt = f"transform this 3D cartoon into a realistic photograph, {preserve_features}, {base_prompt}, photorealistic, keep the same character"
+                elif style == 'watercolor':
+                    # 水彩转真实
+                    full_prompt = f"transform this watercolor painting into a realistic photograph, {preserve_features}, {base_prompt}, photorealistic, keep the same person/character"
+                elif style == 'flat':
+                    # 扁平风格转真实
+                    full_prompt = f"transform this flat design into a realistic photograph, {preserve_features}, {base_prompt}, photorealistic, keep the same character"
                 elif style == 'cyberpunk':
                     # 赛博朋克真实化
-                    full_prompt = f"transform this into a realistic cyberpunk photograph, {base_prompt}, real neon lighting, urban photography"
+                    full_prompt = f"transform this into a realistic cyberpunk photograph, {preserve_features}, {base_prompt}, real neon lighting, urban photography, keep the same character"
                 else:
                     # 通用真实化
-                    full_prompt = f"make this a realistic photograph, {base_prompt}, photorealistic, real world"
+                    full_prompt = f"transform this into a realistic photograph, {preserve_features}, {base_prompt}, photorealistic, keep the same character"
             else:
-                full_prompt = base_prompt
+                full_prompt = f"transform this image, {preserve_features}, {base_prompt}"
         else:
-            full_prompt = base_prompt
+            full_prompt = f"transform this image, {preserve_features}, {base_prompt}"
         
         return full_prompt
     

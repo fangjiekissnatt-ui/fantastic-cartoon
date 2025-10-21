@@ -31,7 +31,7 @@
 
         /* 顶部标题栏 */
         .top-header {
-            height: 60px;
+            height: 68px;
             background: rgba(30, 30, 30, 0.95);
             border-bottom: 1px solid #444;
             display: flex;
@@ -70,6 +70,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            padding-top: 4px;   /* 让按钮距离导航栏顶部留出4px空隙 */
+            padding-bottom: 4px;/* 让按钮距离导航栏底部留出4px空隙 */
         }
 
         .header-btn {
@@ -308,6 +310,7 @@
             justify-content: center;
             background: #2a2a2a;
             position: relative;
+            padding-bottom: 160px; /* 为底部悬浮工具栏预留空间，便于居中计算 */
         }
 
         /* 主画布 */
@@ -320,7 +323,8 @@
             background-image: 
                 radial-gradient(circle at 20px 20px, rgba(255,255,255,0.05) 1px, transparent 1px);
             background-size: 40px 40px;
-            min-height: 100vh; /* 确保最小高度为视口高度 */
+            /* 在顶部导航(68px)与底部工具栏(约160px)之间垂直居中 */
+            min-height: calc(100vh - 68px - 160px);
         }
 
         /* 画布内容容器 */
@@ -427,7 +431,7 @@
             transition: all 0.3s ease;
             object-fit: contain;
             position: relative;
-            z-index: 10; /* 确保图片在最上层 */
+            z-index: 1; /* 降低图片层级，确保loading overlay在上面 */
         }
 
         .canvas-image:hover {
@@ -436,18 +440,19 @@
 
         /* 加载状态 */
         .loading-overlay {
-            position: absolute;
-            top: 0;
+            position: fixed;
+            top: 68px;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border-radius: 15px;
-            z-index: 10;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
         }
 
         .loading-spinner {
@@ -490,6 +495,13 @@
             .canvas-content {
                 width: 95%;
                 height: 85%;
+            }
+            /* 移动端底部工具栏更高，适当加大预留空间 */
+            .canvas-area {
+                padding-bottom: 200px;
+            }
+            .canvas-main {
+                min-height: calc(100vh - 68px - 200px);
             }
         }
 
@@ -796,7 +808,7 @@
 
         /* 输入框内容样式 */
         .prompt-input-bottom::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+            color: #666666;
         }
 
         /* 分割线样式 */
@@ -828,6 +840,58 @@
         .prompt-input-container {
             position: relative;
             width: 100%;
+        }
+
+        /* 智能建议样式 */
+        .prompt-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .suggestions-header {
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .suggestions-list {
+            padding: 5px 0;
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1.4;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .suggestion-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-keyword {
+            color: #667eea;
+            font-weight: 600;
         }
 
         .document-upload-btn {
@@ -949,6 +1013,15 @@
             object-fit: contain;
         }
 
+        /* 按钮文字容器：限制最大宽度并超出省略 */
+        .bottom-btn .btn-label {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
         .bottom-btn:hover {
             background: rgba(255,255,255,0.2);
             transform: translateY(-1px);
@@ -957,6 +1030,46 @@
         .bottom-btn.selected {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
             border-color: #667eea;
+        }
+
+        /* 上传容器样式 */
+        .upload-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 分析按钮样式 */
+        .analyze-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 8px;
+            color: #3498db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .analyze-btn:hover {
+            background: rgba(52, 152, 219, 0.3);
+            border-color: rgba(52, 152, 219, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        .analyze-icon {
+            width: 18px;
+            height: 18px;
+            filter: brightness(0) saturate(100%) invert(59%) sepia(96%) saturate(1352%) hue-rotate(188deg) brightness(101%) contrast(101%);
         }
 
         .generate-btn-bottom {
@@ -1207,17 +1320,10 @@
             <div class="style-grid">
                 <div class="style-option-popup" data-style="disney">
                     <div class="style-preview-popup">
-                            <img src="/static/styles/disney.jpg" alt="迪士尼动画" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <img src="/static/styles/disney.jpg" alt="迪士尼卡通" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="style-fallback">🏰</div>
                         </div>
-                    <div class="style-name-popup">迪士尼动画</div>
-                    </div>
-                <div class="style-option-popup" data-style="reference_3d">
-                    <div class="style-preview-popup">
-                            <img src="/static/styles/reference_3d.jpg" alt="高保真3D卡通" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="style-fallback">🎯</div>
-                        </div>
-                    <div class="style-name-popup">高保真3D卡通</div>
+                    <div class="style-name-popup">迪士尼卡通</div>
                     </div>
                 <div class="style-option-popup" data-style="3d_cartoon">
                     <div class="style-preview-popup">
@@ -1228,59 +1334,38 @@
                     </div>
                 <div class="style-option-popup" data-style="anime">
                     <div class="style-preview-popup">
-                            <img src="/static/styles/anime.jpg" alt="日式动漫" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <img src="/static/styles/anime.jpg" alt="日系漫画" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="style-fallback">🎌</div>
                         </div>
-                    <div class="style-name-popup">日式动漫</div>
+                    <div class="style-name-popup">日系漫画</div>
+                    </div>
+                <div class="style-option-popup" data-style="flat">
+                    <div class="style-preview-popup">
+                            <img src="/static/styles/flat.jpg" alt="扁平风格" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="style-fallback">📐</div>
+                        </div>
+                    <div class="style-name-popup">扁平风格</div>
                     </div>
                 <div class="style-option-popup" data-style="watercolor">
                     <div class="style-preview-popup">
-                            <img src="/static/styles/watercolor.jpg" alt="水彩画风" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <img src="/static/styles/watercolor.jpg" alt="水彩风格" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="style-fallback">🎨</div>
                         </div>
-                    <div class="style-name-popup">水彩画风</div>
-                    </div>
-                <div class="style-option-popup" data-style="oilpainting">
-                    <div class="style-preview-popup">
-                            <img src="/static/styles/oilpainting.jpg" alt="油画风格" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="style-fallback">🖼️</div>
-                        </div>
-                    <div class="style-name-popup">油画风格</div>
-                    </div>
-                <div class="style-option-popup" data-style="pixel">
-                    <div class="style-preview-popup">
-                            <img src="/static/styles/pixel.jpg" alt="像素艺术" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="style-fallback">🕹️</div>
-                        </div>
-                    <div class="style-name-popup">像素艺术</div>
-                    </div>
-                <div class="style-option-popup" data-style="minimalist">
-                    <div class="style-preview-popup">
-                            <img src="/static/styles/minimalist.jpg" alt="极简主义" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="style-fallback">⭕</div>
-                        </div>
-                    <div class="style-name-popup">极简主义</div>
+                    <div class="style-name-popup">水彩风格</div>
                     </div>
                 <div class="style-option-popup" data-style="cyberpunk">
                     <div class="style-preview-popup">
-                            <img src="/static/styles/cyberpunk.jpg" alt="赛博朋克" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <img src="/static/styles/cyberpunk.jpg" alt="赛博酷炫" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="style-fallback">🌃</div>
                         </div>
-                    <div class="style-name-popup">赛博朋克</div>
-                    </div>
-                <div class="style-option-popup" data-style="traditional_chinese">
-                    <div class="style-preview-popup">
-                            <img src="/static/styles/traditional_chinese.jpg" alt="中国山水画" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="style-fallback">🏔️</div>
-                        </div>
-                    <div class="style-name-popup">中国山水画</div>
+                    <div class="style-name-popup">赛博酷炫</div>
                     </div>
                 <div class="style-option-popup" data-style="photography">
                     <div class="style-preview-popup">
-                            <img src="/static/styles/photography.jpg" alt="专业摄影" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <img src="/static/styles/photography.jpg" alt="逼真摄影" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="style-fallback">📸</div>
                         </div>
-                    <div class="style-name-popup">专业摄影</div>
+                    <div class="style-name-popup">逼真摄影</div>
                     </div>
                 </div>
             </div>
@@ -1290,20 +1375,25 @@
         <div class="bottom-prompt">
             <div class="bottom-controls">
                 <div class="bottom-buttons">
-                    <button class="bottom-btn" id="uploadBtn" onclick="uploadImage()">
-                        <img src="/image/icon_photo.svg" alt="上传图片" class="bottom-btn-icon">
-                        上传图片
-                    </button>
-                    <button class="bottom-btn" id="modelBtn" onclick="showModelPopup()">
+                    <div class="upload-container">
+                        <button class="bottom-btn" id="uploadBtn" onclick="uploadImage()" title="上传图片">
+                            <img src="/image/icon_photo.svg" alt="上传图片" class="bottom-btn-icon">
+                            <span class="btn-label" id="uploadBtnLabel">上传图片</span>
+                        </button>
+                        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" title="分析图片" style="display: none;">
+                            <img src="/image/icon_analyze.svg" alt="分析图片" class="analyze-icon">
+                        </button>
+                    </div>
+                    <button class="bottom-btn" id="modelBtn" onclick="showModelPopup()" title="选择模型">
                         <img src="/image/icon_model.svg" alt="选择模型" class="bottom-btn-icon">
-                        选择模型
+                        <span class="btn-label" id="modelBtnLabel">选择模型</span>
                     </button>
-                    <button class="bottom-btn" id="styleBtn" onclick="showStylePopup()">
+                    <button class="bottom-btn" id="styleBtn" onclick="showStylePopup()" title="选择风格">
                         <img src="/image/icon_style.svg" alt="选择风格" class="bottom-btn-icon">
-                        选择风格
+                        <span class="btn-label" id="styleBtnLabel">选择风格</span>
                 </button>
             </div>
-                <button id="generateBtnBottom" class="generate-btn-bottom" onclick="generateImage()">
+                <button id="generateBtnBottom" class="generate-btn-bottom">
                     开始创作
                 </button>
         </div>
@@ -1311,8 +1401,14 @@
                 <textarea
                     id="promptInputBottom"
                     class="prompt-input-bottom" 
-                    placeholder="请输入创意描述..."
+                    placeholder="转换这个角色"
+                    oninput="showPromptSuggestions()"
                 ></textarea>
+                <!-- 智能建议提示 -->
+                <div id="promptSuggestions" class="prompt-suggestions" style="display: none;">
+                    <div class="suggestions-header">💡 智能建议</div>
+                    <div id="suggestionsList" class="suggestions-list"></div>
+                </div>
                 <button class="document-upload-btn" onclick="uploadDocument()" title="上传文档学习">
                     <span class="document-name" id="documentName" style="display: none;"></span>
                     <img src="/image/icon_attachfile.svg" alt="上传文档" class="document-upload-icon">
@@ -1329,10 +1425,11 @@
 
     <script>
         // 全局变量
-        let selectedStyle = null;
-        let selectedModel = 'auto';
+        let selectedStyle = null; // 允许为空
+        let selectedModel = 'auto'; // 默认使用第一个模型
         let currentImage = null;
-        let currentPrompt = '';
+        let currentPrompt = ''; // 允许为空
+        let userManuallySelectedStyle = false; // 标记用户是否手动选择了风格
         let currentZoom = 1.0; // 当前缩放比例
         let imageHistory = []; // 图片历史记录
         let historyIndex = -1; // 当前历史记录索引
@@ -1429,12 +1526,33 @@
             setupPopupEvents();
             setupKeyboardShortcuts();
             setupCanvasDrag();
+            setupStyleShortcuts();
+            
+            // 初始化默认模型选择
+            initializeDefaultModel();
             
             // 确保结果面板在页面加载时是隐藏的
             if (resultPanel) {
                 resultPanel.style.display = 'none';
                 resultPanel.classList.remove('show');
             }
+        }
+        
+        // 初始化默认模型选择
+        function initializeDefaultModel() {
+            // 设置默认模型为auto
+            selectedModel = 'auto';
+            
+            // 更新按钮显示
+            updateModelButton();
+            
+            // 设置默认选中状态
+            const autoOption = document.querySelector('.model-option[data-model="auto"]');
+            if (autoOption) {
+                autoOption.classList.add('selected');
+            }
+            
+            console.log('🤖 默认模型已设置为:', selectedModel);
         }
 
         // 设置事件监听器
@@ -1450,6 +1568,7 @@
             promptInputBottom.addEventListener('input', function() {
                 currentPrompt = this.value;
                 updateCanvasInfo();
+                showPromptSuggestions();
                 
                 // 如果第一行有内容，恢复正常颜色
                 const lines = this.value.split('\n');
@@ -1497,6 +1616,10 @@
                     this.classList.add('selected');
                     selectedStyle = this.dataset.style;
                     
+                    // 标记用户手动选择了风格
+                    userManuallySelectedStyle = true;
+                    console.log(`🎨 用户手动选择风格: ${selectedStyle}`);
+                    
                     // 更新按钮状态
                     updateStyleButton();
                     hideStylePopup();
@@ -1520,37 +1643,46 @@
         // 更新模型按钮状态
         function updateModelButton() {
             const modelBtn = document.getElementById('modelBtn');
+            const modelBtnLabel = document.getElementById('modelBtnLabel');
             const modelNames = {
-                'auto': '🧠 auto',
-                'segmind': '🖼️ flux kontext pro image',
-                'gemini': '🍌 nano banana',
-                'openrouter': '🔮 openrouter',
-                'fallback': '🎨 备用生成器'
+                'auto': 'auto',
+                'segmind': 'flux kontext pro image',
+                'gpt_image1': 'GPT Image 1',
+                'gemini': 'nano banana',
+                'openrouter': 'openrouter',
+                'fallback': '备用生成器'
             };
             
-            modelBtn.textContent = modelNames[selectedModel] || '🤖 选择模型';
-            modelBtn.classList.add('selected');
+            const text = modelNames[selectedModel] || '选择模型';
+            if (modelBtnLabel) {
+                modelBtnLabel.textContent = text;
+            } else {
+                modelBtn.textContent = text;
+            }
+            // modelBtn.classList.add('selected');
         }
 
         // 更新风格按钮状态
         function updateStyleButton() {
             const styleBtn = document.getElementById('styleBtn');
+            const styleBtnLabel = document.getElementById('styleBtnLabel');
             const styleNames = {
-                'disney': '🏰 迪士尼',
-                'reference_3d': '🎯 3D卡通',
-                '3d_cartoon': '🧸 3D卡通',
-                'anime': '🎌 动漫',
-                'watercolor': '🎨 水彩',
-                'oilpainting': '🖼️ 油画',
-                'pixel': '🕹️ 像素',
-                'minimalist': '⭕ 极简',
-                'cyberpunk': '🌃 赛博',
-                'traditional_chinese': '🏔️ 山水',
-                'photography': '📸 摄影'
+                'disney': '迪士尼卡通',
+                '3d_cartoon': '3D卡通',
+                'anime': '日系漫画',
+                'flat': '扁平风格',
+                'watercolor': '水彩风格',
+                'cyberpunk': '赛博酷炫',
+                'photography': '逼真摄影'
             };
             
-            styleBtn.textContent = styleNames[selectedStyle] || '🎭 选择风格';
-            styleBtn.classList.add('selected');
+            const text = styleNames[selectedStyle] || '选择风格';
+            if (styleBtnLabel) {
+                styleBtnLabel.textContent = text;
+            } else {
+                styleBtn.textContent = text;
+            }
+            // styleBtn.classList.add('selected');
         }
 
         // 设置拖拽上传
@@ -1606,17 +1738,14 @@
 
         // 生成图片
         async function generateImage() {
-            const prompt = promptInputBottom.value.trim();
-            
-            if (!prompt) {
-                alert('请输入创意描述！');
+            // 防止重复调用
+            if (generateBtnBottom.disabled) {
+                console.log('⚠️ 正在生成中，请勿重复点击');
                 return;
             }
             
-            if (!selectedStyle) {
-                alert('请选择绘画风格！');
-                return;
-            }
+            const prompt = promptInputBottom.value.trim() || '随机创作'; // 允许为空，使用默认值
+            const style = selectedStyle || 'realistic'; // 允许为空，使用默认风格
 
             showLoading();
             generateBtnBottom.disabled = true;
@@ -1625,9 +1754,11 @@
             try {
                 const formData = new FormData();
                 formData.append('prompt', prompt);
-                formData.append('style', selectedStyle);
+                formData.append('style', style);
                 formData.append('model', selectedModel);
                 console.log('🤖 使用AI模型:', selectedModel);
+                console.log('📝 使用提示词:', prompt);
+                console.log('🎨 使用风格:', style);
 
                 // 如果有上传的参考图片，也一起发送
                 if (hiddenFileInput.files[0]) {
@@ -1710,6 +1841,16 @@
             const file = e.target.files[0];
             if (file && file.type.startsWith('image/')) {
                 handleImageFile(file);
+                // 选择后将文件名显示到上传按钮
+                const label = document.getElementById('uploadBtnLabel');
+                if (label) {
+                    label.textContent = file.name;
+                }
+                // 显示分析按钮
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn) {
+                    analyzeBtn.style.display = 'flex';
+                }
             }
         }
 
@@ -1820,6 +1961,72 @@
         // 工具栏按钮函数
         function uploadImage() {
             hiddenFileInput.click();
+        }
+
+        // 分析图片功能
+        async function analyzeImage() {
+            const file = hiddenFileInput.files[0];
+            if (!file) {
+                alert('请先上传图片');
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('请上传有效的图片文件');
+                return;
+            }
+
+            // 显示分析中的状态
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const originalTitle = analyzeBtn.title;
+            analyzeBtn.title = '分析中...';
+            analyzeBtn.disabled = true;
+
+            try {
+                // 创建FormData
+                const formData = new FormData();
+                formData.append('image', file);
+
+                // 发送分析请求
+                const response = await fetch('/analyze_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 将分析结果填入输入框
+                    const promptInput = document.getElementById('promptInputBottom');
+                    if (promptInput) {
+                        promptInput.value = result.description;
+                        promptInput.focus();
+                        
+                        // 更新当前提示词
+                        currentPrompt = result.description;
+                        updateCanvasInfo();
+                        
+                        // 显示成功提示
+                        showResultInfo({
+                            message: '图片分析完成！您可以编辑描述文字'
+                        }, true);
+                    }
+                } else {
+                    showResultInfo({
+                        error: result.error || '图片分析失败'
+                    }, false);
+                }
+
+            } catch (error) {
+                console.error('分析图片时出错:', error);
+                showResultInfo({
+                    error: '网络错误，请稍后重试'
+                }, false);
+            } finally {
+                // 恢复按钮状态
+                analyzeBtn.title = originalTitle;
+                analyzeBtn.disabled = false;
+            }
         }
 
         // 文档上传函数
@@ -2007,21 +2214,13 @@
         function editImage() {
             if (!currentImage) return;
             
-            // 将当前图片作为参考，重新生成
-            if (currentPrompt) {
-                generateImage();
-            } else {
-                alert('请输入创意描述来编辑图片');
-                promptInput.focus();
-            }
+            // 将当前图片作为参考，重新生成（允许为空）
+            generateImage();
         }
 
         function regenerateImage() {
-            if (currentPrompt && selectedStyle) {
-                generateImage();
-            } else {
-                alert('请确保已选择风格和输入描述');
-            }
+            // 允许为空，直接生成
+            generateImage();
         }
 
         function removeImage() {
@@ -2190,6 +2389,160 @@
             // 隐藏控制按钮
             toggleZoomControls(false);
         }
+
+        // 智能提示词建议功能
+        function showPromptSuggestions() {
+            const input = promptInputBottom.value.trim();
+            const suggestionsDiv = document.getElementById('promptSuggestions');
+            const suggestionsList = document.getElementById('suggestionsList');
+            
+            if (input.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            // 生成建议
+            const suggestions = generatePromptSuggestions(input);
+            
+            if (suggestions.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            // 显示建议
+            suggestionsList.innerHTML = '';
+            suggestions.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerHTML = suggestion.display;
+                item.onclick = () => {
+                    promptInputBottom.value = suggestion.full;
+                    currentPrompt = suggestion.full;
+                    updateCanvasInfo();
+                    suggestionsDiv.style.display = 'none';
+                };
+                suggestionsList.appendChild(item);
+            });
+            
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function generatePromptSuggestions(input) {
+            const suggestions = [];
+            
+            // 关键词匹配建议
+            const keywordMap = {
+                '猫': ['可爱的小猫', '毛茸茸的猫咪', '大眼睛的猫'],
+                '狗': ['忠诚的小狗', '活泼的狗狗', '友好的狗'],
+                '女孩': ['美丽的女孩', '优雅的女性', '甜美的少女'],
+                '男孩': ['帅气的男孩', '阳光的少年', '自信的男性'],
+                '花': ['美丽的花朵', '鲜艳的花卉', '浪漫的花束'],
+                '树': ['高大的树木', '绿色的森林', '茂盛的枝叶'],
+                '房子': ['温馨的房子', '现代的建筑', '古典的房屋'],
+                '车': ['炫酷的跑车', '现代的汽车', '经典的车辆']
+            };
+            
+            // 风格建议
+            const styleMap = {
+                '可爱': ['kawaii风格', '超级可爱', '萌系设计'],
+                '酷炫': ['赛博朋克', '未来科技', '现代时尚'],
+                '梦幻': ['魔法世界', '童话故事', '仙境般'],
+                '复古': ['怀旧风格', '经典设计', '复古美学']
+            };
+            
+            // 检查输入中的关键词
+            for (const [keyword, options] of Object.entries(keywordMap)) {
+                if (input.includes(keyword)) {
+                    options.forEach(option => {
+                        suggestions.push({
+                            display: `💡 ${option}`,
+                            full: option
+                        });
+                    });
+                }
+            }
+            
+            // 检查风格关键词
+            for (const [style, options] of Object.entries(styleMap)) {
+                if (input.includes(style)) {
+                    options.forEach(option => {
+                        suggestions.push({
+                            display: `🎨 ${option}`,
+                            full: input.replace(style, option)
+                        });
+                    });
+                }
+            }
+            
+            // 通用建议
+            if (suggestions.length === 0) {
+                const commonSuggestions = [
+                    '一只可爱的小猫',
+                    '美丽的风景画',
+                    '现代城市建筑',
+                    '梦幻的星空',
+                    '复古的汽车'
+                ];
+                
+                commonSuggestions.forEach(suggestion => {
+                    if (suggestion.includes(input) || input.length < 5) {
+                        suggestions.push({
+                            display: `✨ ${suggestion}`,
+                            full: suggestion
+                        });
+                    }
+                });
+            }
+            
+            return suggestions.slice(0, 5); // 最多显示5个建议
+        }
+
+        // 点击其他地方隐藏建议
+        document.addEventListener('click', function(e) {
+            const suggestionsDiv = document.getElementById('promptSuggestions');
+            const inputContainer = document.querySelector('.prompt-input-container');
+            
+            if (!inputContainer.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // 风格快捷键系统 - 精简为7个核心风格
+        function setupStyleShortcuts() {
+            const shortcuts = {
+                'disney': ['迪士尼', 'disney', 'pixar', '动画', '卡通', '可爱', '圆润', '大眼睛'],
+                '3d_cartoon': ['3d', '3D', '立体', '卡通', 'cartoon', 'c4d', '圆润', '可爱', '玩具'],
+                'anime': ['动漫', 'anime', '日漫', 'manga', '日式', '二次元', '可爱', '细腻', '色彩'],
+                'flat': ['扁平', 'flat', '简洁', '几何', '现代', '简约', '线条', '明亮', '设计'],
+                'watercolor': ['水彩', 'watercolor', '水墨', '渐变', '透明', '艺术', '柔和', '流动', '画笔'],
+                'cyberpunk': ['赛博', 'cyber', '朋克', 'punk', '未来', '科幻', '霓虹', '科技', '夜景', '酷炫'],
+                'photography': ['摄影', 'photography', '专业', '真实', '高清', '细节', '光影', '相机', '写实', '逼真']
+            };
+            
+            // 监听输入框变化
+            promptInputBottom.addEventListener('input', function() {
+                const input = this.value.toLowerCase();
+                
+                // 只有在用户没有手动选择风格时才自动选择
+                if (!userManuallySelectedStyle) {
+                    // 检查是否包含风格快捷键
+                    for (const [styleKey, keywords] of Object.entries(shortcuts)) {
+                        for (const keyword of keywords) {
+                            if (input.includes(keyword.toLowerCase())) {
+                                // 自动选择对应风格
+                                if (selectedStyle !== styleKey) {
+                                    selectedStyle = styleKey;
+                                    updateStyleButton();
+                                    console.log(`🎨 自动选择风格: ${styleKey}`);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
 
     </script>
 </body>

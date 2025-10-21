@@ -16,6 +16,7 @@ from segmind_image_generator import segmind_generator
 from gpt_image1_generator import gpt_image1_generator
 from document_processor import document_processor
 from config import Config
+from prompt_enhancer import prompt_enhancer
 
 # 创建Flask应用 - Flask是一个简单易用的Python网站框架
 app = Flask(__name__)
@@ -144,6 +145,63 @@ def process_document():
         })
 
 # 处理图片生成请求的路由
+@app.route('/analyze_image', methods=['POST'])
+def analyze_image():
+    """
+    分析上传的图片，生成文字描述
+    """
+    try:
+        # 检查是否有上传的图片
+        if 'image' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': '没有上传图片'
+            })
+        
+        file = request.files['image']
+        if not file or not file.filename:
+            return jsonify({
+                'success': False,
+                'error': '请选择图片文件'
+            })
+        
+        # 检查文件类型
+        if not allowed_file(file.filename):
+            return jsonify({
+                'success': False,
+                'error': '不支持的文件格式，请上传图片文件'
+            })
+        
+        # 保存临时文件
+        filename = f"temp_{uuid.uuid4().hex}_{file.filename}"
+        temp_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(temp_path)
+        
+        try:
+            # 使用文档处理器分析图片
+            description = document_processor.analyze_image(temp_path)
+            
+            # 删除临时文件
+            os.remove(temp_path)
+            
+            return jsonify({
+                'success': True,
+                'description': description
+            })
+            
+        except Exception as e:
+            # 确保删除临时文件
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise e
+        
+    except Exception as e:
+        print(f"图片分析失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'图片分析失败: {str(e)}'
+        })
+
 @app.route('/generate', methods=['POST'])
 def generate_image():
     """
@@ -151,25 +209,27 @@ def generate_image():
     这个函数接收用户的描述文字、风格选择和参考图片，然后生成新图片
     """
     try:
-        # 获取用户输入的描述文字
+        # 获取用户输入的描述文字（允许为空）
         prompt = request.form.get('prompt', '').strip()
-        # 获取用户选择的风格
-        style = request.form.get('style', '')
-        # 获取用户选择的AI模型
-        selected_model = request.form.get('model', 'auto')
-        
-        # 检查必填信息是否完整
         if not prompt:
-            return jsonify({
-                'success': False,
-                'error': '请输入图片描述'
-            })
+            prompt = '随机创作，创意无限'  # 默认提示词
         
+        # 获取用户选择的风格（允许为空）
+        style = request.form.get('style', '')
         if not style:
-            return jsonify({
-                'success': False,
-                'error': '请选择绘画风格'
-            })
+            style = 'realistic'  # 默认风格
+        
+        # 使用智能提示词增强器优化用户输入
+        enhanced_prompt = prompt_enhancer.enhance_prompt(prompt, style)
+        print(f"📝 原始提示词: {prompt}")
+        print(f"🚀 增强后提示词: {enhanced_prompt}")
+        
+        # 获取用户选择的AI模型（默认使用第一个）
+        selected_model = request.form.get('model', 'auto')
+        print(f"🤖 使用模型: {selected_model}")
+        
+        # 移除必填信息检查，允许为空
+        print(f"✅ 参数检查通过 - 提示词: {prompt}, 风格: {style}")
         
         # 处理用户上传的参考图片（如果有的话）
         reference_image_path = None
@@ -203,7 +263,7 @@ def generate_image():
         
         # 根据用户选择的模型进行图片生成
         generated_image_path = generate_with_selected_model(
-            prompt=prompt,
+            prompt=enhanced_prompt,
             style=style,
             selected_model=selected_model,
             reference_image_path=reference_image_path
@@ -421,29 +481,34 @@ def generate_with_selected_model(prompt, style, selected_model, reference_image_
     if selected_model == 'auto':
         print("🧠 使用智能选择模式...")
         
-        # 如果选择了真实照片转换风格，并且有参考图片，优先使用Segmind
-        if style == 'realistic_transform' and reference_image_path:
-            print("🎯 智能选择：使用Segmind进行真实照片转换...")
+        # 如果有参考图片，优先使用Segmind进行图片转换
+        if reference_image_path and os.path.exists(reference_image_path):
+            print("🎯 智能选择：检测到参考图片，使用Segmind进行图片转换...")
             generated_image_path = segmind_generator.generate_image(
                 prompt=prompt,
                 style=style, 
                 reference_image_path=reference_image_path
             )
+            
+            # 如果Segmind成功，直接返回结果
+            if generated_image_path:
+                return generated_image_path
+            else:
+                print("⚠️ Segmind生成失败，尝试其他模型...")
         
-        # 如果Segmind失败或不适用，使用Google Gemini
-        if not generated_image_path:
-            print("🤖 智能选择：使用Google Gemini AI图片生成...")
-            generated_image_path = gemini_generator.generate_image(
-                prompt=prompt,
-                style=style, 
-                reference_image_path=reference_image_path
-            )
+        # 如果没有参考图或Segmind失败，使用Google Gemini
+        print("🤖 智能选择：使用Google Gemini AI图片生成...")
+        generated_image_path = gemini_generator.generate_image(
+            prompt=prompt,
+            style=style, 
+            reference_image_path=reference_image_path
+        )
         
         # 如果Gemini也失败，回退到原有生成器
         if not generated_image_path:
             print("⚠️ 智能选择：Gemini生成失败，使用备用生成器...")
             generated_image_path = ai_generator.generate_image(
-                prompt=prompt,
+                prompt=enhanced_prompt,
                 style=style, 
                 reference_image_path=reference_image_path
             )
@@ -550,6 +615,50 @@ def generated_file(filename):
     AI生成的图片可以通过这个路径访问
     """
     return send_from_directory(GENERATED_FOLDER, filename)
+
+# 智能提示词增强API
+@app.route('/enhance-prompt', methods=['POST'])
+def enhance_prompt():
+    """
+    智能提示词增强接口
+    将用户的简短输入转换为详细的AI绘图提示词
+    """
+    try:
+        data = request.get_json()
+        if not data or 'prompt' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少提示词参数'
+            }), 400
+        
+        user_input = data['prompt'].strip()
+        style = data.get('style', None)
+        
+        if not user_input:
+            return jsonify({
+                'success': False,
+                'error': '提示词不能为空'
+            }), 400
+        
+        # 使用智能提示词增强器
+        enhanced_prompt = prompt_enhancer.enhance_prompt(user_input, style)
+        
+        # 生成建议
+        suggestions = prompt_enhancer.get_prompt_suggestions(user_input)
+        
+        return jsonify({
+            'success': True,
+            'original_prompt': user_input,
+            'enhanced_prompt': enhanced_prompt,
+            'suggestions': suggestions
+        })
+        
+    except Exception as e:
+        print(f"❌ 提示词增强失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'提示词增强失败: {str(e)}'
+        }), 500
 
 # 健康检查接口 - 检查服务器是否正常运行
 @app.route('/health')
